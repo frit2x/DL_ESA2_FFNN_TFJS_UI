@@ -390,7 +390,7 @@ function setupEventHandlers() {
     const alias = prompt('Exportiere dieses Modell als Alias-Datei:', modelKey);
     if (!alias) return;
 
-    await models[modelKey].save('downloads://' + alias);
+    await models[modelKey].save(tf.io.browserDownloads(alias));
     setStatus(`Modell ${modelKey} exportiert als ${alias}.json + ${alias}.weights.bin`);
   });
 
