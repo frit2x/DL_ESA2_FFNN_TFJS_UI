@@ -406,6 +406,7 @@ function setupEventHandlers() {
 
       const saveHandler = tf.io.withSaveHandler(async (data) => {
         try {
+          alert('saveHandler called');
           const modelJson = {
             modelTopology: data.modelTopology,
             weightsManifest: [
