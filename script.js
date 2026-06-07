@@ -406,7 +406,6 @@ function setupEventHandlers() {
 
       const saveHandler = tf.io.withSaveHandler(async (data) => {
         try {
-          alert('saveHandler called');
           const modelJson = {
             modelTopology: data.modelTopology,
             weightsManifest: [
@@ -417,8 +416,6 @@ function setupEventHandlers() {
             ]
           };
 
-          console.log('Export: modelJson', modelJson);
-          console.log('Export: weightSpecs', data.weightSpecs);
           downloadFile(JSON.stringify(modelJson), alias + '.json', 'application/json');
 
           // Ensure we pass an ArrayBuffer for the binary download
