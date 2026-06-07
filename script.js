@@ -406,8 +406,22 @@ function setupEventHandlers() {
 
       const saveHandler = tf.io.withSaveHandler(async (data) => {
         try {
-          downloadFile(JSON.stringify(data.modelTopology), alias + '.json', 'application/json');
-          downloadFile(data.weightData, alias + '.weights.bin', 'application/octet-stream');
+          const modelJson = {
+            modelTopology: data.modelTopology,
+            weightsManifest: [
+              {
+                paths: [alias + '.weights.bin'],
+                weights: data.weightSpecs || []
+              }
+            ]
+          };
+
+          downloadFile(JSON.stringify(modelJson), alias + '.json', 'application/json');
+
+          // Ensure we pass an ArrayBuffer for the binary download
+          let weightData = data.weightData;
+          if (weightData && weightData.buffer) weightData = weightData.buffer;
+          downloadFile(weightData, alias + '.weights.bin', 'application/octet-stream');
           return { modelArtifactsInfo: { dateSaved: new Date(), modelTopologyType: 'JSON', weightDataType: 'ArrayBuffer' } };
         } catch (err) {
           console.error('Download error:', err);
