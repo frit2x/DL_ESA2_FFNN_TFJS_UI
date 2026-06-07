@@ -174,6 +174,25 @@ body {
   color: #1e2c55;
 }
 
+.help-text {
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: #eef6ff;
+  border: 1px solid #cddcff;
+  border-radius: 12px;
+  color: #20325d;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.help-text p {
+  margin: 0 0 8px;
+}
+
+.help-text p:last-child {
+  margin-bottom: 0;
+}
+
 .panel-results {
   display: grid;
   gap: 18px;

@@ -52,8 +52,9 @@ function makeDataset(N = 100, noiseVar = 0.05) {
   dataset.yTrainNoisy = dataset.yTrain.map((y) => y + gaussianNoise(std));
   dataset.yTestNoisy = dataset.yTest.map((y) => y + gaussianNoise(std));
 
+  resetResults();
   plotDataset();
-  setStatus(`Datensatz erzeugt: N=${N}, Rauschen V=${noiseVar.toFixed(3)}`);
+  setStatus(`Datensatz erzeugt: N=${N}, Rauschen V=${noiseVar.toFixed(3)} — alte Ergebnisse zurückgesetzt`);
 }
 
 function createModel() {
@@ -97,6 +98,42 @@ function plotDataset() {
     { x: dataset.xTrain, y: dataset.yTrainNoisy, mode: 'markers', name: 'Train mit Rauschen', marker: { color: '#ff4e4e', size: 8 } },
     { x: dataset.xTest, y: dataset.yTestNoisy, mode: 'markers', name: 'Test mit Rauschen', marker: { color: '#ff9a4e', size: 8 } }
   ], Object.assign({ title: 'Datensatz mit Rauschen' }, layout), { responsive: true });
+}
+
+function resetResults() {
+  const plotIds = [
+    'plot-clean-train', 'plot-clean-test',
+    'plot-best-train', 'plot-best-test',
+    'plot-over-train', 'plot-over-test'
+  ];
+  plotIds.forEach((id) => {
+    const element = document.getElementById(id);
+    if (element) {
+      Plotly.purge(element);
+      element.innerHTML = '';
+    }
+  });
+
+  const lossIds = [
+    'loss-clean-train', 'loss-clean-test',
+    'loss-best-train', 'loss-best-test',
+    'loss-over-train', 'loss-over-test'
+  ];
+  lossIds.forEach((id) => {
+    const element = document.getElementById(id);
+    if (element) element.textContent = '';
+  });
+
+  const lossPlot = document.getElementById('plot-losses');
+  if (lossPlot) {
+    Plotly.purge(lossPlot);
+    lossPlot.innerHTML = '';
+  }
+
+  Object.keys(models).forEach((key) => delete models[key]);
+  lossHistory.clean = [];
+  lossHistory.best = [];
+  lossHistory.over = [];
 }
 
 function plotPredictionSingle(plotId, modelName, xData, yData, title, dataType = 'train', noisy = false) {
@@ -188,6 +225,65 @@ function evaluate(modelName, xData, yData) {
   return mse(yData, yPred);
 }
 
+function getSavedModelAliasMap() {
+  try {
+    const raw = localStorage.getItem('tfjsModelAliasMap');
+    return raw ? JSON.parse(raw) : {};
+  } catch (error) {
+    return {};
+  }
+}
+
+function setSavedModelAlias(alias, modelKey) {
+  const map = getSavedModelAliasMap();
+  map[alias] = modelKey;
+  localStorage.setItem('tfjsModelAliasMap', JSON.stringify(map));
+}
+
+function resolveSavedModelKey(alias) {
+  const map = getSavedModelAliasMap();
+  if (map[alias]) return map[alias];
+
+  const normalized = alias.toLowerCase();
+  if (normalized.includes('clean')) return 'clean';
+  if (normalized.includes('best')) return 'best';
+  if (normalized.includes('over')) return 'over';
+
+  return ['clean', 'best', 'over'].includes(alias) ? alias : null;
+}
+
+function renderLoadedModel(alias, modelKey) {
+  if (!dataset.xTrain.length) {
+    setStatus('Modell geladen: Bitte zuerst Datensatz erzeugen oder laden.');
+    return;
+  }
+
+  const key = modelKey || alias;
+  const availableTrainPlot = document.getElementById(`plot-${key}-train`);
+  const availableTestPlot = document.getElementById(`plot-${key}-test`);
+  const availableTrainLoss = document.getElementById(`loss-${key}-train`);
+  const availableTestLoss = document.getElementById(`loss-${key}-test`);
+  if (!availableTrainPlot || !availableTestPlot || !availableTrainLoss || !availableTestLoss) {
+    setStatus(`Modell geladen: ${alias}. Kein automatisches Update möglich für Modelltyp ${key}.`);
+    return;
+  }
+
+  const isNoisy = key !== 'clean';
+  const yTrain = isNoisy ? dataset.yTrainNoisy : dataset.yTrain;
+  const yTest = isNoisy ? dataset.yTestNoisy : dataset.yTest;
+  const label = key === 'clean' ? 'Clean' : key === 'best' ? 'Best-Fit' : key === 'over' ? 'Overfit' : 'Geladenes Modell';
+  const plotType = isNoisy ? 'verrauscht' : 'unverrauscht';
+
+  plotPredictionSingle(`plot-${key}-train`, alias, dataset.xTrain, yTrain, `${label} — Train (${plotType})`, 'train', isNoisy);
+  plotPredictionSingle(`plot-${key}-test`, alias, dataset.xTest, yTest, `${label} — Test (${plotType})`, 'test', isNoisy);
+
+  const trainLoss = evaluate(alias, dataset.xTrain, yTrain);
+  const testLoss = evaluate(alias, dataset.xTest, yTest);
+  availableTrainLoss.textContent = `Train MSE: ${trainLoss.toExponential(3)}`;
+  availableTestLoss.textContent = `Test MSE: ${testLoss.toExponential(3)}`;
+  setStatus(`Modell geladen und Visualisierung aktualisiert: ${alias} (${key})`);
+}
+
 function setupEventHandlers() {
   document.getElementById('btn-generate').addEventListener('click', () => {
     const N = parseInt(document.getElementById('numPoints').value, 10);
@@ -217,8 +313,9 @@ function setupEventHandlers() {
       reader.onload = () => {
         const data = JSON.parse(reader.result);
         Object.assign(dataset, data);
+        resetResults();
         plotDataset();
-        setStatus('Dataset geladen.');
+        setStatus('Dataset geladen — alte Ergebnisse zurückgesetzt.');
       };
       reader.readAsText(file);
     };
@@ -226,26 +323,100 @@ function setupEventHandlers() {
   });
 
   document.getElementById('btn-save-model').addEventListener('click', async () => {
-    const name = prompt('Speichere Modell unter Namen:', 'best');
-    if (!name) return;
-    const model = models[name];
-    if (!model) {
-      alert('Kein trainiertes Modell namens ' + name);
+    const trainedNames = Object.keys(models);
+    if (!trainedNames.length) {
+      alert('Keine trainierten Modelle vorhanden. Bitte zuerst Trainieren.');
       return;
     }
-    await model.save('indexeddb://' + name);
-    setStatus(`Modell gespeichert: ${name}`);
+
+    const modelKey = prompt('Welches trainierte Modell speichern? (clean, best, over)', trainedNames.includes('best') ? 'best' : trainedNames[0]);
+    if (!modelKey) return;
+    if (!models[modelKey]) {
+      alert('Kein trainiertes Modell namens ' + modelKey + '. Verfügbare Modelle: ' + trainedNames.join(', '));
+      return;
+    }
+
+    const alias = prompt('Speichere dieses Modell unter dem Alias:', modelKey);
+    if (!alias) return;
+
+    await models[modelKey].save('indexeddb://' + alias);
+    setSavedModelAlias(alias, modelKey);
+    setStatus(`Modell ${modelKey} gespeichert als ${alias}`);
   });
 
   document.getElementById('btn-load-model').addEventListener('click', async () => {
-    const name = prompt('Lade Modell aus IndexedDB:', 'best');
+    const listed = await tf.io.listModels();
+    const known = Object.keys(listed)
+      .filter((key) => key.startsWith('indexeddb://'))
+      .map((key) => key.replace('indexeddb://', ''));
+
+    const defaultName = known.includes('best') ? 'best' : (known[0] || '');
+    const name = prompt('Lade Modell aus IndexedDB. Verfügbare: ' + (known.length ? known.join(', ') : 'keine'), defaultName);
     if (!name) return;
+
+    const savedKey = 'indexeddb://' + name;
+    if (!listed[savedKey]) {
+      alert('Kein gespeichertes Modell unter dem Namen ' + name + '. Verfügbare Modelle: ' + (known.length ? known.join(', ') : 'keine'));
+      return;
+    }
+
     try {
-      models[name] = await tf.loadLayersModel('indexeddb://' + name);
-      setStatus(`Modell geladen: ${name}`);
+      models[name] = await tf.loadLayersModel(savedKey);
+      const modelKey = resolveSavedModelKey(name);
+      if (modelKey) {
+        renderLoadedModel(name, modelKey);
+      } else {
+        setStatus(`Modell geladen: ${name}. Alias-Typ unbekannt, bitte speichere clean/best/over oder nutze diesen Alias erneut.`);
+      }
     } catch (error) {
       alert('Laden fehlgeschlagen: ' + error.message);
     }
+  });
+
+  document.getElementById('btn-export-model').addEventListener('click', async () => {
+    const trainedNames = Object.keys(models);
+    if (!trainedNames.length) {
+      alert('Keine trainierten Modelle vorhanden. Bitte zuerst trainieren.');
+      return;
+    }
+
+    const modelKey = prompt('Welches trainierte Modell exportieren? (clean, best, over)', trainedNames.includes('best') ? 'best' : trainedNames[0]);
+    if (!modelKey) return;
+    if (!models[modelKey]) {
+      alert('Kein trainiertes Modell namens ' + modelKey + '. Verfügbare Modelle: ' + trainedNames.join(', '));
+      return;
+    }
+
+    const alias = prompt('Exportiere dieses Modell als Alias-Datei:', modelKey);
+    if (!alias) return;
+
+    await models[modelKey].save('downloads://' + alias);
+    setStatus(`Modell ${modelKey} exportiert als ${alias}.json + ${alias}.weights.bin`);
+  });
+
+  document.getElementById('btn-import-model').addEventListener('click', async () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.multiple = true;
+    input.accept = '.json,.bin';
+    input.onchange = async (event) => {
+      const files = Array.from(event.target.files || []);
+      if (!files.length) return;
+      try {
+        const loadedModel = await tf.loadLayersModel(tf.io.browserFiles(files));
+        const jsonFile = files.find((file) => file.name.endsWith('.json'));
+        const alias = jsonFile ? jsonFile.name.replace(/\.json$/, '') : `imported_model_${Date.now()}`;
+        models[alias] = loadedModel;
+        setStatus(`Modell importiert: ${alias}`);
+        const modelKey = resolveSavedModelKey(alias);
+        if (modelKey) {
+          renderLoadedModel(alias, modelKey);
+        }
+      } catch (error) {
+        alert('Import fehlgeschlagen: ' + error.message);
+      }
+    };
+    input.click();
   });
 
   document.getElementById('btn-train-clean').addEventListener('click', async () => {
