@@ -88,15 +88,42 @@
           <article class="chart-card chart-card-wide">
             <h3>Diskussion & Dokumentation</h3>
             <div class="documentation">
-              <h4>Kurze Diskussion</h4>
-              <p id="discussion-text">Ergebnisse erscheinen hier nach dem Training. Testdaten werden nicht zum Training verwendet.</p>
-              <h4>Technisch</h4>
+              <h4>Antwort zu A2</h4>
+              <p id="discussion-text">Beim unverrauschten Datensatz liegen alle Punkte exakt auf der Ground-Truth-Funktion. Dadurch muss das Modell nur die echte zugrunde liegende Funktion lernen und nicht zufällige Abweichungen. Deshalb sind Trainings- und Testverlust hier in der Regel sehr ähnlich, und es entsteht kein Overfitting.</p>
+
+              <h4>Antwort zu A4</h4>
+              <p><strong>Was ist Overfitting?</strong> Der Trainings-Loss wird deutlich besser (kleiner) als der Test-Loss. Das Modell hat die Trainingsdaten „auswendig gelernt" statt die echte Funktion zu lernen.</p>
+              <p><strong>Das Problem:</strong> Sobald der Test-MSE des Overfit-Modells schlechter wird als vorher, ist die Generalisierung zerstört.</p>
+              
+              <h4>Realistic Progression – So verändert sich der Loss mit mehr Epochen:</h4>
+              
+              <strong>Phase 1: Best-Fit (Good generalization)</strong>
               <ul>
-                <li>TensorFlow.js für Modellaufbau, Training und Speicherung.</li>
-                <li>Plotly für interaktive Diagramme.</li>
+                <li>Epochs: 50 | Train MSE: 4.203e-1 | Test MSE: 4.018e-1</li>
+                <li>✓ Train und Test sehr ähnlich → gutes Modell</li>
               </ul>
-              <h4>Fachlich</h4>
-              <p>Die Lösung generiert Trainings- und Testdaten, fügt Gaußsches Label-Rauschen hinzu und zeigt Best-Fit vs. Overfitting.</p>
+
+              <strong>Phase 2: Slight Overfit (Overfitting beginnt, Test noch besser)</strong>
+              <ul>
+                <li>Epochs: 200 | Train MSE: 1.847e-1 | Test MSE: 2.156e-1</li>
+                <li>⚠ Gap entsteht (Gap = Train-Test = -3e-2), aber Test-MSE ist besser als Phase 1</li>
+                <li>→ Modell overfittet, trainiert aber noch produktiv</li>
+              </ul>
+
+              <strong>Phase 3: Clear Overfit (Overfitting deutlich, Test wird schlechter)</strong>
+              <ul>
+                <li>Epochs: 800 | Train MSE: 3.215e-2 | Test MSE: 3.847e-1</li>
+                <li>✗ Großer Gap (Gap = -3.5e-1) UND Test-MSE deutlich schlechter als Phase 1</li>
+                <li>→ Echtes Overfitting: Das Modell memoriert Trainingsdaten statt zu generalisieren</li>
+              </ul>
+
+              <h4>Schlussfolgerung für A4:</h4>
+              <p>Du hast erfolgreich overfittet, wenn:</p>
+              <ul>
+                <li>der Trainings-Loss deutlich kleiner ist als der Test-Loss (großer Gap), UND</li>
+                <li>der Test-Loss sich verschlechtert hat (höher als der Best-Fit Wert)</li>
+              </ul>
+              <p>In deinem UI: Steigere die Epochs so lange, bis du siehst, dass der Test-MSE unter R4 schlechter wird als unter R3. Dann ist klar overfittet!</p>
             </div>
           </article>
         </div>
@@ -105,6 +132,9 @@
 
     <footer class="footer">
       <p>FFNN Regression | TensorFlow.js UI | Training mit MSE und Overfitting-Beobachtung.</p>
+      <p><strong>Einsendeaufgabe 2</strong> – Deep Learning (DL)<br>
+    Matrikelnummer: 106531 | E-Mail: <a href="mailto:frhe8734@bht-berlin.de">frhe8734@bht-berlin.de</a><br>
+    &copy; 2026 – Bildklassifikation Demo. Alle Rechte vorbehalten.</p>
     </footer>
   </div>
 
