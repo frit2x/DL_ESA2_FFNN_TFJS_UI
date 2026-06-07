@@ -28,56 +28,82 @@
         </div>
 
         <div class="button-row">
-          <button id="btn-generate" type="button">Datensatz erzeugen</button>
-          <button id="btn-save-data" type="button">Dataset speichern</button>
-          <button id="btn-load-data" type="button">Dataset laden</button>
+          <button id="btn-generate" type="button" class="btn-alt">Datensatz erzeugen</button>
+          <button id="btn-save-data" type="button" class="btn-alt">Dataset speichern</button>
+          <button id="btn-load-data" type="button" class="btn-alt">Dataset laden</button>
         </div>
         <div class="status-message" id="status">Bereit. Klicken Sie auf "Datensatz erzeugen".</div>
 
         <div class="field-row">
+          <button id="btn-train-clean" type="button" class="btn-wide">Trainieren (ohne Rauschen)</button>
+        </div>
+
+        <div class="field-row align-center">
           <label>Epochs Best-Fit:
             <input id="epochsBest" type="number" value="50" min="1">
           </label>
+          <button id="btn-train-best" type="button" class="btn-inline">Trainieren (Best-Fit)</button>
+        </div>
+
+        <div class="field-row align-center">
           <label>Epochs Over-Fit:
             <input id="epochsOver" type="number" value="500" min="1">
           </label>
+          <button id="btn-train-over" type="button" class="btn-inline">Trainieren (Overfit)</button>
         </div>
 
         <div class="button-row">
-          <button id="btn-train-clean" type="button">Trainieren (ohne Rauschen)</button>
-          <button id="btn-train-best" type="button">Trainieren (Best-Fit)</button>
-          <button id="btn-train-over" type="button">Trainieren (Overfit)</button>
-        </div>
-
-        <div class="button-row">
-          <button id="btn-save-model" type="button">Modell speichern</button>
-          <button id="btn-load-model" type="button">Modell laden</button>
+          <button id="btn-save-model" type="button" class="btn-model">Modell speichern</button>
+          <button id="btn-load-model" type="button" class="btn-model">Modell laden</button>
         </div>
       </section>
 
       <section class="panel panel-results">
         <div class="results-grid">
+          <!-- R1: Datensätze ohne / mit Rauschen -->
           <article class="chart-card">
-            <h3>R1: Datensatz</h3>
-            <div id="plot-data" class="chart"></div>
+            <h3>R1: Datensatz (ohne Rauschen)</h3>
+            <div id="plot-data-clean" class="chart"></div>
+          </article>
+          <article class="chart-card">
+            <h3>R1: Datensatz (mit Rauschen)</h3>
+            <div id="plot-data-noisy" class="chart"></div>
           </article>
 
+          <!-- R2: Vorhersage ohne Rauschen (links: Train, rechts: Test) -->
           <article class="chart-card">
-            <h3>R2: Vorhersage (ohne Rauschen)</h3>
-            <div id="plot-clean" class="chart"></div>
-            <div class="loss" id="loss-clean"></div>
+            <h3>R2: y_unverrauscht(x) — Trainingsdaten</h3>
+            <div id="plot-clean-train" class="chart"></div>
+            <div class="loss" id="loss-clean-train"></div>
+          </article>
+          <article class="chart-card">
+            <h3>R2: y_unverrauscht(x) — Testdaten</h3>
+            <div id="plot-clean-test" class="chart"></div>
+            <div class="loss" id="loss-clean-test"></div>
           </article>
 
+          <!-- R3: Best-Fit (verrauscht) -->
           <article class="chart-card">
-            <h3>R3: Vorhersage Best-Fit (verrauscht)</h3>
-            <div id="plot-best" class="chart"></div>
-            <div class="loss" id="loss-best"></div>
+            <h3>R3: y_best(x) — Trainingsdaten (verrauscht)</h3>
+            <div id="plot-best-train" class="chart"></div>
+            <div class="loss" id="loss-best-train"></div>
+          </article>
+          <article class="chart-card">
+            <h3>R3: y_best(x) — Testdaten (verrauscht)</h3>
+            <div id="plot-best-test" class="chart"></div>
+            <div class="loss" id="loss-best-test"></div>
           </article>
 
+          <!-- R4: Overfit (verrauscht) -->
           <article class="chart-card">
-            <h3>R4: Vorhersage Overfit (verrauscht)</h3>
-            <div id="plot-over" class="chart"></div>
-            <div class="loss" id="loss-over"></div>
+            <h3>R4: y_overfit(x) — Trainingsdaten (verrauscht)</h3>
+            <div id="plot-over-train" class="chart"></div>
+            <div class="loss" id="loss-over-train"></div>
+          </article>
+          <article class="chart-card">
+            <h3>R4: y_overfit(x) — Testdaten (verrauscht)</h3>
+            <div id="plot-over-test" class="chart"></div>
+            <div class="loss" id="loss-over-test"></div>
           </article>
 
           <article class="chart-card chart-card-wide">
@@ -118,12 +144,12 @@
               </ul>
 
               <h4>Schlussfolgerung für A4:</h4>
-              <p>Du hast erfolgreich overfittet, wenn:</p>
+              <p>Das Modell ist overfittet, wenn:</p>
               <ul>
                 <li>der Trainings-Loss deutlich kleiner ist als der Test-Loss (großer Gap), UND</li>
                 <li>der Test-Loss sich verschlechtert hat (höher als der Best-Fit Wert)</li>
               </ul>
-              <p>In deinem UI: Steigere die Epochs so lange, bis du siehst, dass der Test-MSE unter R4 schlechter wird als unter R3. Dann ist klar overfittet!</p>
+            
             </div>
           </article>
         </div>

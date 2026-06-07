@@ -58,6 +58,83 @@ body {
   margin-bottom: 14px;
 }
 
+.align-center {
+  align-items: center;
+}
+
+.btn-inline {
+  padding: 10px 12px;
+  min-width: 160px;
+}
+
+.btn-wide {
+  width: 100%;
+  padding: 12px 14px;
+}
+
+/* Alternate colored buttons for dataset actions */
+.button-row .btn-alt {
+  flex: 1;
+  min-width: 130px;
+  background: #2b9f6b !important;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.button-row .btn-alt:hover {
+  opacity: 0.95;
+  transform: translateY(-1px);
+}
+
+/* Model save/load buttons (thematic different color) */
+.button-row .btn-model {
+  flex: 1;
+  min-width: 130px;
+  background: #a34ed9;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 14px;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+}
+
+.button-row .btn-model:hover {
+  opacity: 0.95;
+  transform: translateY(-1px);
+}
+
+/* Ensure inline and wide buttons use primary styling when used outside .button-row */
+.btn-inline,
+.btn-wide,
+.panel-controls > button,
+.panel-controls button {
+  background: #3751ff;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+}
+
+.btn-inline:hover,
+.btn-wide:hover,
+.panel-controls > button:hover,
+.panel-controls button:hover {
+  opacity: 0.95;
+  transform: translateY(-1px);
+}
+
 .field-row label {
   font-size: 0.95rem;
   color: #2d3856;

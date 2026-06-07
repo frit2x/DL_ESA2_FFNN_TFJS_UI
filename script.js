@@ -79,74 +79,38 @@ function linspace(min, max, count) {
 }
 
 function plotDataset() {
-  const traces = [
-    {
-      x: dataset.xTrain,
-      y: dataset.yTrain,
-      mode: 'markers',
-      name: 'Train ohne Rauschen',
-      marker: { color: '#0a57ff', size: 8 }
-    },
-    {
-      x: dataset.xTest,
-      y: dataset.yTest,
-      mode: 'markers',
-      name: 'Test ohne Rauschen',
-      marker: { color: '#4ea5ff', size: 8 }
-    },
-    {
-      x: dataset.xTrain,
-      y: dataset.yTrainNoisy,
-      mode: 'markers',
-      name: 'Train mit Rauschen',
-      marker: { color: '#ff4e4e', size: 8 }
-    },
-    {
-      x: dataset.xTest,
-      y: dataset.yTestNoisy,
-      mode: 'markers',
-      name: 'Test mit Rauschen',
-      marker: { color: '#ff9a4e', size: 8 }
-    }
-  ];
-
   const layout = {
-    title: 'Datensätze',
     xaxis: { title: 'x' },
     yaxis: { title: 'y' },
     height: 330,
     margin: { t: 40, l: 50, r: 20, b: 40 }
   };
 
-  Plotly.newPlot('plot-data', traces, layout, { responsive: true });
+  // Clean dataset (no noise)
+  Plotly.newPlot('plot-data-clean', [
+    { x: dataset.xTrain, y: dataset.yTrain, mode: 'markers', name: 'Train ohne Rauschen', marker: { color: '#0a57ff', size: 8 } },
+    { x: dataset.xTest, y: dataset.yTest, mode: 'markers', name: 'Test ohne Rauschen', marker: { color: '#4ea5ff', size: 8 } }
+  ], Object.assign({ title: 'Datensatz ohne Rauschen' }, layout), { responsive: true });
+
+  // Noisy dataset
+  Plotly.newPlot('plot-data-noisy', [
+    { x: dataset.xTrain, y: dataset.yTrainNoisy, mode: 'markers', name: 'Train mit Rauschen', marker: { color: '#ff4e4e', size: 8 } },
+    { x: dataset.xTest, y: dataset.yTestNoisy, mode: 'markers', name: 'Test mit Rauschen', marker: { color: '#ff9a4e', size: 8 } }
+  ], Object.assign({ title: 'Datensatz mit Rauschen' }, layout), { responsive: true });
 }
 
-function plotPrediction(plotId, modelName, yTrain, yTest, title, noisy = false) {
+function plotPredictionSingle(plotId, modelName, xData, yData, title, dataType = 'train', noisy = false) {
   const xGrid = linspace(-2, 2, 250);
   const predictions = predictModel(modelName, xGrid);
 
+  // Choose marker color depending on train/test and noisy flag
+  let markerColor = '#0a57ff';
+  if (noisy) markerColor = dataType === 'train' ? '#ff6f6f' : '#ffb46f';
+  else markerColor = dataType === 'train' ? '#0a57ff' : '#4ea5ff';
+
   const traces = [
-    {
-      x: xGrid,
-      y: predictions,
-      mode: 'lines',
-      name: 'Modellkurve',
-      line: { color: '#2dbe8f', width: 3 }
-    },
-    {
-      x: dataset.xTrain,
-      y: yTrain,
-      mode: 'markers',
-      name: 'Train',
-      marker: { color: noisy ? '#ff6f6f' : '#0a57ff', size: 8 }
-    },
-    {
-      x: dataset.xTest,
-      y: yTest,
-      mode: 'markers',
-      name: 'Test',
-      marker: { color: noisy ? '#ffb46f' : '#4ea5ff', size: 8 }
-    }
+    { x: xGrid, y: predictions, mode: 'lines', name: 'Modellkurve', line: { color: '#2dbe8f', width: 3 } },
+    { x: xData, y: yData, mode: 'markers', name: dataType === 'train' ? 'Train' : 'Test', marker: { color: markerColor, size: 8 } }
   ];
 
   Plotly.newPlot(plotId, traces, {
@@ -293,8 +257,10 @@ function setupEventHandlers() {
     await train('clean', dataset.xTrain, dataset.yTrain, parseInt(document.getElementById('epochsBest').value, 10));
     const trainLoss = evaluate('clean', dataset.xTrain, dataset.yTrain);
     const testLoss = evaluate('clean', dataset.xTest, dataset.yTest);
-    plotPrediction('plot-clean', 'clean', dataset.yTrain, dataset.yTest, 'Vorhersage (ohne Rauschen)');
-    document.getElementById('loss-clean').textContent = `Train MSE: ${trainLoss.toExponential(3)} | Test MSE: ${testLoss.toExponential(3)}`;
+    plotPredictionSingle('plot-clean-train', 'clean', dataset.xTrain, dataset.yTrain, 'Vorhersage unverrauscht — Train', 'train', false);
+    plotPredictionSingle('plot-clean-test', 'clean', dataset.xTest, dataset.yTest, 'Vorhersage unverrauscht — Test', 'test', false);
+    document.getElementById('loss-clean-train').textContent = `Train MSE: ${trainLoss.toExponential(3)}`;
+    document.getElementById('loss-clean-test').textContent = `Test MSE: ${testLoss.toExponential(3)}`;
     setStatus('Clean-Modell trainiert.');
   });
 
@@ -307,8 +273,10 @@ function setupEventHandlers() {
     await train('best', dataset.xTrain, dataset.yTrainNoisy, parseInt(document.getElementById('epochsBest').value, 10));
     const trainLoss = evaluate('best', dataset.xTrain, dataset.yTrainNoisy);
     const testLoss = evaluate('best', dataset.xTest, dataset.yTestNoisy);
-    plotPrediction('plot-best', 'best', dataset.yTrainNoisy, dataset.yTestNoisy, 'Best-Fit Vorhersage (verrauscht)', true);
-    document.getElementById('loss-best').textContent = `Train MSE: ${trainLoss.toExponential(3)} | Test MSE: ${testLoss.toExponential(3)}`;
+    plotPredictionSingle('plot-best-train', 'best', dataset.xTrain, dataset.yTrainNoisy, 'Best-Fit — Train (verrauscht)', 'train', true);
+    plotPredictionSingle('plot-best-test', 'best', dataset.xTest, dataset.yTestNoisy, 'Best-Fit — Test (verrauscht)', 'test', true);
+    document.getElementById('loss-best-train').textContent = `Train MSE: ${trainLoss.toExponential(3)}`;
+    document.getElementById('loss-best-test').textContent = `Test MSE: ${testLoss.toExponential(3)}`;
     setStatus('Best-Fit-Modell trainiert.');
   });
 
@@ -321,8 +289,10 @@ function setupEventHandlers() {
     await train('over', dataset.xTrain, dataset.yTrainNoisy, parseInt(document.getElementById('epochsOver').value, 10));
     const trainLoss = evaluate('over', dataset.xTrain, dataset.yTrainNoisy);
     const testLoss = evaluate('over', dataset.xTest, dataset.yTestNoisy);
-    plotPrediction('plot-over', 'over', dataset.yTrainNoisy, dataset.yTestNoisy, 'Overfit Vorhersage (verrauscht)', true);
-    document.getElementById('loss-over').textContent = `Train MSE: ${trainLoss.toExponential(3)} | Test MSE: ${testLoss.toExponential(3)}`;
+    plotPredictionSingle('plot-over-train', 'over', dataset.xTrain, dataset.yTrainNoisy, 'Overfit — Train (verrauscht)', 'train', true);
+    plotPredictionSingle('plot-over-test', 'over', dataset.xTest, dataset.yTestNoisy, 'Overfit — Test (verrauscht)', 'test', true);
+    document.getElementById('loss-over-train').textContent = `Train MSE: ${trainLoss.toExponential(3)}`;
+    document.getElementById('loss-over-test').textContent = `Test MSE: ${testLoss.toExponential(3)}`;
     setStatus('Overfit-Modell trainiert.');
   });
 }
