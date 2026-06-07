@@ -5,6 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FFNN Regression mit TensorFlow.js</title>
   <link rel="stylesheet" href="style.css?v=2">
+  <style>
+    .btn-alt { background: #2b9f6b !important; color: white !important; border-radius: 12px !important; }
+    .btn-model { background: #a34ed9 !important; color: white !important; border-radius: 12px !important; }
+    .btn-inline, .btn-wide, .button-row button { background: #3751ff !important; color: white !important; border-radius: 12px !important; }
+    .btn-alt, .btn-model, .btn-inline, .btn-wide, .button-row button { transition: opacity 0.2s, transform 0.2s; }
+    .btn-alt:hover, .btn-model:hover, .btn-inline:hover, .btn-wide:hover, .button-row button:hover { opacity: 0.95 !important; transform: translateY(-1px) !important; }
+  </style>
   <script src="https://cdn.plot.ly/plotly-2.24.2.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.14.0/dist/tf.min.js"></script>
 </head>
@@ -28,7 +35,7 @@
         </div>
 
         <div class="button-row">
-          <button id="btn-generate" type="button" class="btn-alt">Datensatz erzeugen</button>
+          <button id="btn-generate" type="button" class="btn-alt" onclick="makeDataset(parseInt(document.getElementById('numPoints').value, 10), parseFloat(document.getElementById('noiseVar').value))">Datensatz erzeugen</button>
           <button id="btn-save-data" type="button" class="btn-alt">Dataset speichern</button>
           <button id="btn-load-data" type="button" class="btn-alt">Dataset laden</button>
         </div>
@@ -112,12 +119,12 @@
           </article>
 
           <article class="chart-card chart-card-wide">
-            <h3>Diskussion & Dokumentation</h3>
+            <h3>Diskussion</h3>
             <div class="documentation">
-              <h4>Antwort zu A2</h4>
+              <h4>Diskussion zu A2</h4>
               <p id="discussion-text">Beim unverrauschten Datensatz liegen alle Punkte exakt auf der Ground-Truth-Funktion. Dadurch muss das Modell nur die echte zugrunde liegende Funktion lernen und nicht zufällige Abweichungen. Deshalb sind Trainings- und Testverlust hier in der Regel sehr ähnlich, und es entsteht kein Overfitting.</p>
 
-              <h4>Antwort zu A4</h4>
+              <h4>Diskussion zu A4</h4>
               <p><strong>Was ist Overfitting?</strong> Der Trainings-Loss wird deutlich besser (kleiner) als der Test-Loss. Das Modell hat die Trainingsdaten „auswendig gelernt" statt die echte Funktion zu lernen.</p>
               <p><strong>Das Problem:</strong> Sobald der Test-MSE des Overfit-Modells schlechter wird als vorher, ist die Generalisierung zerstört.</p>
               
@@ -149,7 +156,25 @@
                 <li>der Trainings-Loss deutlich kleiner ist als der Test-Loss (großer Gap), UND</li>
                 <li>der Test-Loss sich verschlechtert hat (höher als der Best-Fit Wert)</li>
               </ul>
-            
+            </div>
+          </article>
+
+          <article class="chart-card chart-card-wide">
+            <h3>Dokumentation</h3>
+            <div class="documentation">
+              <h5>1) Technisch</h5>
+              <ul>
+                <li><strong>TensorFlow.js</strong>: Wird für das Erstellen, Kompilieren und Trainieren der neuronalen Netze im Browser verwendet.</li>
+                <li><strong>Plotly.js</strong>: Erzeugt die interaktiven Diagramme für Datensätze, Modellvorhersagen und Loss-Verläufe.</li>
+                <li><strong>JavaScript</strong>: Steuert die Daten-Generierung, Modelllogik, Plot-Aktualisierung und Benutzerinteraktionen.</li>
+                <li><strong>IndexedDB</strong>: Dient als Browser-Speicher zum Speichern und Laden trainierter Modelle lokal.</li>
+              </ul>
+              <p>Technische Besonderheiten: Die Lösung trennt saubere und verrauschte Trainingsdaten, erzeugt separate Vorhersageplots für Training und Test und verwendet Cache-Busting in den lokalen CSS/JS-Imports, um auf GitHub Pages stets die aktuelle Version zu laden.</p>
+
+              <h5>2) Fachlich</h5>
+              <p>Zur Implementierung: Die Logik erzeugt zuerst einen synthetischen Datensatz aus der Ziel-Funktion, teilt ihn in Trainings- und Testdaten und fügt definierte Rauschwerte hinzu. Das "clean" Modell wird auf sauberen Daten trainiert, das "best" Modell auf verrauschten Daten mit moderater Epoche und das "over" Modell mit vielen Epochen, um Overfitting zu demonstrieren.</p>
+              <p>Wichtige Resultate: Der MSE wird für Trainings- und Testdaten getrennt berechnet und angezeigt. Das saubere Modell zeigt meist ähnliche Trainings- und Testloss-Werte, während das Overfit-Modell einen niedrigen Trainingswert, aber deutlich höheren Testwert erhält.</p>
+      
             </div>
           </article>
         </div>
