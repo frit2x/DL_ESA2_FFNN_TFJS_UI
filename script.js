@@ -401,19 +401,43 @@ function setupEventHandlers() {
     input.accept = '.json,.bin';
     input.onchange = async (event) => {
       const files = Array.from(event.target.files || []);
-      if (!files.length) return;
+      if (!files.length) {
+        setStatus('Import abgebrochen: keine Dateien ausgewählt.');
+        return;
+      }
+
+      const jsonFile = files.find((file) => file.name.endsWith('.json'));
+      const binFile = files.find((file) => file.name.endsWith('.bin'));
+      if (!jsonFile || !binFile) {
+        alert('Bitte sowohl die JSON-Datei als auch die BIN-Datei auswählen.');
+        setStatus('Import fehlgeschlagen: JSON- und BIN-Datei fehlen.');
+        return;
+      }
+
+      setStatus('Importiere Modell...');
       try {
-        const loadedModel = await tf.loadLayersModel(tf.io.browserFiles(files));
-        const jsonFile = files.find((file) => file.name.endsWith('.json'));
-        const alias = jsonFile ? jsonFile.name.replace(/\.json$/, '') : `imported_model_${Date.now()}`;
+        const orderedFiles = [jsonFile, binFile];
+        const loadedModel = await tf.loadLayersModel(tf.io.browserFiles(orderedFiles));
+        const alias = jsonFile.name.replace(/\.json$/, '');
         models[alias] = loadedModel;
-        setStatus(`Modell importiert: ${alias}`);
-        const modelKey = resolveSavedModelKey(alias);
+
+        let modelKey = resolveSavedModelKey(alias);
+        if (!modelKey) {
+          const chosenKey = prompt('Welcher Modelltyp ist dieses importierte Modell? (clean, best, over)', 'best');
+          if (chosenKey && ['clean', 'best', 'over'].includes(chosenKey)) {
+            modelKey = chosenKey;
+            setSavedModelAlias(alias, modelKey);
+          }
+        }
+
         if (modelKey) {
           renderLoadedModel(alias, modelKey);
+        } else {
+          setStatus(`Modell importiert: ${alias}. Kein Modelltyp automatisch erkannt.`);
         }
       } catch (error) {
         alert('Import fehlgeschlagen: ' + error.message);
+        setStatus('Import fehlgeschlagen: ' + error.message);
       }
     };
     input.click();
