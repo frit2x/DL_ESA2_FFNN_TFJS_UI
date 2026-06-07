@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FFNN Regression mit TensorFlow.js</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.plot.ly/plotly-2.24.2.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.14.0/dist/tf.min.js"></script>
+</head>
+<body>
+  <div class="page-shell">
+    <header class="app-header">
+      <h1>FFNN Regression mit TensorFlow.js</h1>
+      <p>y(x) = 0.5*(x+0.8)*(x+1.8)*(x-0.2)*(x-0.3)*(x-1.9)+1 auf [-2,2]</p>
+    </header>
+
+    <main class="layout">
+      <section class="panel panel-controls">
+        <h2>Datensatz & Training</h2>
+        <div class="field-row">
+          <label>N gesamt:
+            <input id="numPoints" type="number" value="100" min="10" max="1000">
+          </label>
+          <label>Rauschen V:
+            <input id="noiseVar" type="number" value="0.05" step="0.01" min="0">
+          </label>
+        </div>
+
+        <div class="button-row">
+          <button id="btn-generate" type="button">Datensatz erzeugen</button>
+          <button id="btn-save-data" type="button">Dataset speichern</button>
+          <button id="btn-load-data" type="button">Dataset laden</button>
+        </div>
+        <div class="status-message" id="status">Bereit. Klicken Sie auf "Datensatz erzeugen".</div>
+
+        <div class="field-row">
+          <label>Epochs Best-Fit:
+            <input id="epochsBest" type="number" value="50" min="1">
+          </label>
+          <label>Epochs Over-Fit:
+            <input id="epochsOver" type="number" value="500" min="1">
+          </label>
+        </div>
+
+        <div class="button-row">
+          <button id="btn-train-clean" type="button">Trainieren (ohne Rauschen)</button>
+          <button id="btn-train-best" type="button">Trainieren (Best-Fit)</button>
+          <button id="btn-train-over" type="button">Trainieren (Overfit)</button>
+        </div>
+
+        <div class="button-row">
+          <button id="btn-save-model" type="button">Modell speichern</button>
+          <button id="btn-load-model" type="button">Modell laden</button>
+        </div>
+      </section>
+
+      <section class="panel panel-results">
+        <div class="results-grid">
+          <article class="chart-card">
+            <h3>R1: Datensatz</h3>
+            <div id="plot-data" class="chart"></div>
+          </article>
+
+          <article class="chart-card">
+            <h3>R2: Vorhersage (ohne Rauschen)</h3>
+            <div id="plot-clean" class="chart"></div>
+            <div class="loss" id="loss-clean"></div>
+          </article>
+
+          <article class="chart-card">
+            <h3>R3: Vorhersage Best-Fit (verrauscht)</h3>
+            <div id="plot-best" class="chart"></div>
+            <div class="loss" id="loss-best"></div>
+          </article>
+
+          <article class="chart-card">
+            <h3>R4: Vorhersage Overfit (verrauscht)</h3>
+            <div id="plot-over" class="chart"></div>
+            <div class="loss" id="loss-over"></div>
+          </article>
+
+          <article class="chart-card chart-card-wide">
+            <h3>Training Loss-Verlauf</h3>
+            <div id="plot-losses" class="chart"></div>
+          </article>
+
+          <article class="chart-card chart-card-wide">
+            <h3>Diskussion & Dokumentation</h3>
+            <div class="documentation">
+              <h4>Kurze Diskussion</h4>
+              <p id="discussion-text">Ergebnisse erscheinen hier nach dem Training. Testdaten werden nicht zum Training verwendet.</p>
+              <h4>Technisch</h4>
+              <ul>
+                <li>TensorFlow.js für Modellaufbau, Training und Speicherung.</li>
+                <li>Plotly für interaktive Diagramme.</li>
+              </ul>
+              <h4>Fachlich</h4>
+              <p>Die Lösung generiert Trainings- und Testdaten, fügt Gaußsches Label-Rauschen hinzu und zeigt Best-Fit vs. Overfitting.</p>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>FFNN Regression | TensorFlow.js UI | Training mit MSE und Overfitting-Beobachtung.</p>
+    </footer>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
