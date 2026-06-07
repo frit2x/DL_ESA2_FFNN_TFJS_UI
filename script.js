@@ -284,6 +284,16 @@ function renderLoadedModel(alias, modelKey) {
   setStatus(`Modell geladen und Visualisierung aktualisiert: ${alias} (${key})`);
 }
 
+function downloadFile(data, filename, mimeType) {
+  const blob = new Blob([data], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 function setupEventHandlers() {
   document.getElementById('btn-generate').addEventListener('click', () => {
     const N = parseInt(document.getElementById('numPoints').value, 10);
@@ -392,8 +402,20 @@ function setupEventHandlers() {
 
     try {
       setStatus('Exportiere Modell...');
-      const handler = tf.io.browserDownloads(alias);
-      await models[modelKey].save(handler);
+      const model = models[modelKey];
+
+      const saveHandler = tf.io.withSaveHandler(async (data) => {
+        try {
+          downloadFile(JSON.stringify(data.modelTopology), alias + '.json', 'application/json');
+          downloadFile(data.weightData, alias + '.weights.bin', 'application/octet-stream');
+          return { modelArtifactsInfo: { dateSaved: new Date(), modelTopologyType: 'JSON', weightDataType: 'ArrayBuffer' } };
+        } catch (err) {
+          console.error('Download error:', err);
+          throw err;
+        }
+      });
+
+      await model.save(saveHandler);
       setStatus(`✓ Modell ${modelKey} exportiert: ${alias}.json und ${alias}.weights.bin`);
     } catch (error) {
       console.error('Export error:', error);
