@@ -390,8 +390,16 @@ function setupEventHandlers() {
     const alias = prompt('Exportiere dieses Modell als Alias-Datei:', modelKey);
     if (!alias) return;
 
-    await models[modelKey].save(tf.io.browserDownloads(alias));
-    setStatus(`Modell ${modelKey} exportiert als ${alias}.json + ${alias}.weights.bin`);
+    try {
+      setStatus('Exportiere Modell...');
+      const handler = tf.io.browserDownloads(alias);
+      await models[modelKey].save(handler);
+      setStatus(`✓ Modell ${modelKey} exportiert: ${alias}.json und ${alias}.weights.bin`);
+    } catch (error) {
+      console.error('Export error:', error);
+      alert('Export fehlgeschlagen: ' + error.message);
+      setStatus('Export fehlgeschlagen.');
+    }
   });
 
   document.getElementById('btn-import-model').addEventListener('click', async () => {
