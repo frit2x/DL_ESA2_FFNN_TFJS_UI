@@ -416,12 +416,22 @@ function setupEventHandlers() {
             ]
           };
 
+          console.log('Export: modelJson', modelJson);
+          console.log('Export: weightSpecs', data.weightSpecs);
           downloadFile(JSON.stringify(modelJson), alias + '.json', 'application/json');
 
           // Ensure we pass an ArrayBuffer for the binary download
           let weightData = data.weightData;
           if (weightData && weightData.buffer) weightData = weightData.buffer;
-          downloadFile(weightData, alias + '.weights.bin', 'application/octet-stream');
+
+          // Stagger downloads slightly to avoid browser blocking multiple downloads
+          setTimeout(() => {
+            try {
+              downloadFile(weightData, alias + '.weights.bin', 'application/octet-stream');
+            } catch (dErr) {
+              console.error('Binary download failed:', dErr);
+            }
+          }, 120);
           return { modelArtifactsInfo: { dateSaved: new Date(), modelTopologyType: 'JSON', weightDataType: 'ArrayBuffer' } };
         } catch (err) {
           console.error('Download error:', err);
