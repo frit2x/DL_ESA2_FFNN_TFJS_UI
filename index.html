@@ -137,7 +137,7 @@
             <div class="documentation">
               <h4>Diskussion zu A2</h4>
               <p id="discussion-text">Beim unverrauschten Datensatz liegen alle Punkte exakt auf der Ground-Truth-Funktion. Dadurch muss das Modell nur die echte zugrunde liegende Funktion lernen und nicht zufällige Abweichungen. Deshalb sind Trainings- und Testverlust hier in der Regel sehr ähnlich, und es entsteht kein Overfitting.</p>
-              <p>Für die Abgabe wird initial ein fester Datensatz geladen, damit die Werte für Best-Fit und Overfit reproduzierbar bleiben und die Messergebnisse in der Diskussion konsistent beschreibbar sind.</p>
+              <p>Für die Abgabe wird initial ein fester Datensatz geladen, damit die Werte Näherungsweise reproduzierbar bleiben und die Messergebnisse in der Diskussion beschreibbar sind.</p>
 
               <h4>Diskussion zu A4</h4>
               <p><strong>Was ist Overfitting?</strong> Der Trainings-Loss wird deutlich besser (kleiner) als der Test-Loss. Das Modell hat die Trainingsdaten „auswendig gelernt" statt die echte Funktion zu lernen.</p>
@@ -150,11 +150,11 @@
                 <li><strong>Best-Fit:</strong> <code>350</code> Epochen auf verrauschten Daten. Diese Einstellung zielt darauf ab, das beste Gleichgewicht zwischen Trainings- und Testloss zu erreichen.</li>
                 <li><strong>Overfit:</strong> <code>3000</code> Epochen auf verrauschten Daten. Das soll den Overfitting-Bereich einleiten, allerdings kann die Test-MSE in einigen Läufen immer noch besser ausfallen als beim Best-Fit. Aber da der Training Loss-Verlauf in dem Diagramm mitläuft und entsprechend Zeit in Anspruch nimmt, wurde dieser Wert als Vorauswahl verwendet. Er kann beliebig hochgesetzt werden, um den Effekt weiter zu verstärken.</li>
               </ul>
-              <p>Erzielte Messwerte aus dem aktuellen Startlauf:</p>
+              <p>Erzielte Messwerte mit dem aktuellen geladenen Dataset:</p>
               <ul>
                 <li><strong>Clean 100:</strong> Train MSE ≈ 0.02125, Test MSE ≈ 0.008283</li>
                 <li><strong>Best-Fit 350:</strong> Train MSE ≈ 0.0363, Test MSE ≈ 0.0917</li>
-                <li><strong>Overfit 3000:</strong> Train MSE ≈ 0.02791, Test MSE ≈ 0.09789</li>
+                <li><strong>Overfit 3000:</strong> Train MSE ≈ 0.02791, Test MSE ≈ 0.0635</li>
               </ul>
               <p>Diese Werte zeigen: Der Overfit-Fall ist lange nicht eindeutig, weil das Netzwerk bei 3000 Epochen teilweise auf diesem Datensatz noch etwas besser generalisieren kann als bei Best-Fit mit 350. Ein klarer Overfitting-Beweis wäre, wenn die Test-MSE des Overfit-Modells höher liegt als die des Best-Fit-Modells. Also höher als 3000.</p>
               <h4>Schlussfolgerung für A4:</h4>
