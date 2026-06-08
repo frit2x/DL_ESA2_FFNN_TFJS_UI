@@ -19,10 +19,25 @@ function randomUniform(min, max) {
   return Math.random() * (max - min) + min;
 }
 
-function gaussianNoise(std) {
+function seededRandom(seed) {
+  let t = seed >>> 0;
+  return function() {
+    t += 0x6D2B79F5;
+    let r = t;
+    r = Math.imul(r ^ (r >>> 15), 1 | r);
+    r ^= r + Math.imul(r ^ (r >>> 7), 61 | r);
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function randomUniformWithRand(min, max, rand) {
+  return rand() * (max - min) + min;
+}
+
+function gaussianNoise(std, rand = Math.random) {
   let u = 0, v = 0;
-  while (u === 0) u = Math.random();
-  while (v === 0) v = Math.random();
+  while (u === 0) u = rand();
+  while (v === 0) v = rand();
   return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v) * std;
 }
 
@@ -31,10 +46,11 @@ function setStatus(text) {
   if (status) status.textContent = text;
 }
 
-function makeDataset(N = 100, noiseVar = 0.05) {
-  const xs = Array.from({ length: N }, () => randomUniform(-2, 2));
+function makeDataset(N = 100, noiseVar = 0.05, seed = null) {
+  const rand = seed != null ? seededRandom(seed) : Math.random;
+  const xs = Array.from({ length: N }, () => randomUniformWithRand(-2, 2, rand));
   for (let i = xs.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(rand() * (i + 1));
     [xs[i], xs[j]] = [xs[j], xs[i]];
   }
 
@@ -49,8 +65,8 @@ function makeDataset(N = 100, noiseVar = 0.05) {
   dataset.yTest = ys.slice(half, half * 2);
 
   const std = Math.sqrt(noiseVar);
-  dataset.yTrainNoisy = dataset.yTrain.map((y) => y + gaussianNoise(std));
-  dataset.yTestNoisy = dataset.yTest.map((y) => y + gaussianNoise(std));
+  dataset.yTrainNoisy = dataset.yTrain.map((y) => y + gaussianNoise(std, rand));
+  dataset.yTestNoisy = dataset.yTest.map((y) => y + gaussianNoise(std, rand));
 
   resetResults();
   plotDataset();
@@ -284,6 +300,41 @@ function renderLoadedModel(alias, modelKey) {
   setStatus(`Modell geladen und Visualisierung aktualisiert: ${alias} (${key})`);
 }
 
+function renderModelResults(key, yTrain, yTest, noisy) {
+  const trainLoss = evaluate(key, dataset.xTrain, yTrain);
+  const testLoss = evaluate(key, dataset.xTest, yTest);
+
+  plotPredictionSingle(`plot-${key}-train`, key, dataset.xTrain, yTrain, `${key === 'clean' ? 'Unverrauscht' : key === 'best' ? 'Best-Fit' : 'Overfit'} — Train`, 'train', noisy);
+  plotPredictionSingle(`plot-${key}-test`, key, dataset.xTest, yTest, `${key === 'clean' ? 'Unverrauscht' : key === 'best' ? 'Best-Fit' : 'Overfit'} — Test`, 'test', noisy);
+
+  document.getElementById(`loss-${key}-train`).textContent = `Train MSE: ${trainLoss.toExponential(3)}`;
+  document.getElementById(`loss-${key}-test`).textContent = `Test MSE: ${testLoss.toExponential(3)}`;
+}
+
+const DEFAULT_EPOCHS_CLEAN = 100;
+const DEFAULT_EPOCHS_BEST = 350;
+const DEFAULT_EPOCHS_OVER = 1250;
+
+async function initialTraining() {
+  setStatus('Initialisiere festen Datensatz und trainiere Modelle...');
+  makeDataset(100, 0.05, 12345);
+
+  const epochsClean = Number.parseInt(document.getElementById('epochsClean').value, 10) || DEFAULT_EPOCHS_CLEAN;
+  const epochsBest = Number.parseInt(document.getElementById('epochsBest').value, 10) || DEFAULT_EPOCHS_BEST;
+  const epochsOver = Number.parseInt(document.getElementById('epochsOver').value, 10) || DEFAULT_EPOCHS_OVER;
+
+  await train('clean', dataset.xTrain, dataset.yTrain, epochsClean);
+  renderModelResults('clean', dataset.yTrain, dataset.yTest, false);
+
+  await train('best', dataset.xTrain, dataset.yTrainNoisy, epochsBest);
+  renderModelResults('best', dataset.yTrainNoisy, dataset.yTestNoisy, true);
+
+  await train('over', dataset.xTrain, dataset.yTrainNoisy, epochsOver);
+  renderModelResults('over', dataset.yTrainNoisy, dataset.yTestNoisy, true);
+
+  setStatus(`Initialisierung abgeschlossen. Fester Datensatz geladen und Modelle trainiert (Clean ${epochsClean}, Best-Fit ${epochsBest}, Overfit ${epochsOver}).`);
+}
+
 function downloadFile(data, filename, mimeType) {
   const blob = new Blob([data], { type: mimeType });
   const url = URL.createObjectURL(blob);
@@ -501,14 +552,15 @@ function setupEventHandlers() {
       return;
     }
     setStatus('Trainiere Clean-Modell...');
-    await train('clean', dataset.xTrain, dataset.yTrain, parseInt(document.getElementById('epochsBest').value, 10));
+    const epochsClean = Number.parseInt(document.getElementById('epochsClean').value, 10) || DEFAULT_EPOCHS_CLEAN;
+    await train('clean', dataset.xTrain, dataset.yTrain, epochsClean);
     const trainLoss = evaluate('clean', dataset.xTrain, dataset.yTrain);
     const testLoss = evaluate('clean', dataset.xTest, dataset.yTest);
     plotPredictionSingle('plot-clean-train', 'clean', dataset.xTrain, dataset.yTrain, 'Vorhersage unverrauscht — Train', 'train', false);
     plotPredictionSingle('plot-clean-test', 'clean', dataset.xTest, dataset.yTest, 'Vorhersage unverrauscht — Test', 'test', false);
     document.getElementById('loss-clean-train').textContent = `Train MSE: ${trainLoss.toExponential(3)}`;
     document.getElementById('loss-clean-test').textContent = `Test MSE: ${testLoss.toExponential(3)}`;
-    setStatus('Clean-Modell trainiert.');
+    setStatus(`Clean-Modell trainiert (${epochsClean} Epochen).`);
   });
 
   document.getElementById('btn-train-best').addEventListener('click', async () => {
@@ -546,5 +598,5 @@ function setupEventHandlers() {
 
 window.addEventListener('DOMContentLoaded', () => {
   setupEventHandlers();
-  makeDataset();
+  initialTraining();
 });

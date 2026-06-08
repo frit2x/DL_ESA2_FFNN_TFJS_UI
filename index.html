@@ -41,20 +41,23 @@
         </div>
         <div class="status-message" id="status">Bereit. Klicken Sie auf "Datensatz erzeugen".</div>
 
-        <div class="field-row">
-          <button id="btn-train-clean" type="button" class="btn-wide">Trainieren (ohne Rauschen)</button>
+        <div class="field-row align-center">
+          <label>Epochs Clean:
+            <input id="epochsClean" type="number" value="100" min="1">
+          </label>
+          <button id="btn-train-clean" type="button" class="btn-inline">Trainieren (ohne Rauschen)</button>
         </div>
 
         <div class="field-row align-center">
           <label>Epochs Best-Fit:
-            <input id="epochsBest" type="number" value="50" min="1">
+            <input id="epochsBest" type="number" value="350" min="1">
           </label>
           <button id="btn-train-best" type="button" class="btn-inline">Trainieren (Best-Fit)</button>
         </div>
 
         <div class="field-row align-center">
           <label>Epochs Over-Fit:
-            <input id="epochsOver" type="number" value="500" min="1">
+            <input id="epochsOver" type="number" value="3000" min="1">
           </label>
           <button id="btn-train-over" type="button" class="btn-inline">Trainieren (Overfit)</button>
         </div>
@@ -72,6 +75,7 @@
           <p><strong>Modell laden:</strong> Beim Laden wird eine Liste der verfügbaren gespeicherten Aliase angezeigt. Durch bestätigen eines Alias wird automatisch das Modell visualisiert.</p>
           <p><strong>Modell exportieren:</strong> Lade das Modell als Dateien herunter (<code>.json</code> + <code>.bin</code>) und speichere es extern.</p>
           <p><strong>Modell importieren:</strong> Lade ein zuvor exportiertes Modell, indem du die Modell-Datei auswählst.</p>
+          <p><strong>Startwerte:</strong> Beim Laden verwendet die Seite standardmäßig <code>Clean = 100</code>, <code>Best-Fit = 350</code> und <code>Overfit = 1250</code> Epochen.</p>
         </div>
       </section>
 
@@ -133,33 +137,27 @@
             <div class="documentation">
               <h4>Diskussion zu A2</h4>
               <p id="discussion-text">Beim unverrauschten Datensatz liegen alle Punkte exakt auf der Ground-Truth-Funktion. Dadurch muss das Modell nur die echte zugrunde liegende Funktion lernen und nicht zufällige Abweichungen. Deshalb sind Trainings- und Testverlust hier in der Regel sehr ähnlich, und es entsteht kein Overfitting.</p>
+              <p>Für die Abgabe wird initial ein fester Datensatz geladen, damit die Werte für Best-Fit und Overfit reproduzierbar bleiben und die Messergebnisse in der Diskussion konsistent beschreibbar sind.</p>
 
               <h4>Diskussion zu A4</h4>
               <p><strong>Was ist Overfitting?</strong> Der Trainings-Loss wird deutlich besser (kleiner) als der Test-Loss. Das Modell hat die Trainingsdaten „auswendig gelernt" statt die echte Funktion zu lernen.</p>
               <p><strong>Das Problem:</strong> Sobald der Test-MSE des Overfit-Modells schlechter wird als vorher, ist die Generalisierung zerstört.</p>
               
-              <h4>Realistic Progression – So verändert sich der Loss mit mehr Epochen:</h4>
-              
-              <strong>Phase 1: Best-Fit (Good generalization)</strong>
+              <h4>Realistische Epoche-Auswahl</h4>
+              <p>Die Startwerte im UI wurden so gewählt, dass die drei Modelltypen unterscheidbar sind:</p>
               <ul>
-                <li>Epochs: 50 | Train MSE: 4.203e-1 | Test MSE: 4.018e-1</li>
-                <li>✓ Train und Test sehr ähnlich → gutes Modell</li>
+                <li><strong>Clean:</strong> <code>100</code> Epochen auf sauberen Daten. Das Modell approximiert die Originalfunktion besser und bleibt dabei noch generalisierend.</li>
+                <li><strong>Best-Fit:</strong> <code>350</code> Epochen auf verrauschten Daten. Diese Einstellung zielt darauf ab, das beste Gleichgewicht zwischen Trainings- und Testloss zu erreichen.</li>
+                <li><strong>Overfit:</strong> <code>3000</code> Epochen auf verrauschten Daten. Das soll den Overfitting-Bereich einleiten, allerdings kann die Test-MSE in einigen Läufen immer noch besser ausfallen als beim Best-Fit. Aber da der Training Loss-Verlauf in dem Diagramm mitläuft und entsprechend Zeit in Anspruch nimmt, wurde dieser Wert als Vorauswahl verwendet. Er kann beliebig hochgesetzt werden, um den Effekt weiter zu verstärken.</li>
               </ul>
-
-              <strong>Phase 2: Slight Overfit (Overfitting beginnt, Test noch besser)</strong>
+              <p>Messwerte aus dem aktuellen Startlauf:</p>
               <ul>
-                <li>Epochs: 200 | Train MSE: 1.847e-1 | Test MSE: 2.156e-1</li>
-                <li>⚠ Gap entsteht (Gap = Train-Test = -3e-2), aber Test-MSE ist besser als Phase 1</li>
-                <li>→ Modell overfittet, trainiert aber noch produktiv</li>
+                <li><strong>Clean 100:</strong> Train MSE ≈ 0.0108, Test MSE ≈ 0.0585</li>
+                <li><strong>350:</strong> Train MSE ≈ 0.0363, Test MSE ≈ 0.0917</li>
+                <li><strong>1250:</strong> Train MSE ≈ 0.0289, Test MSE ≈ 0.0886</li>
+                <li><strong>3000:</strong> Train MSE ≈ 0.02791, Test MSE ≈ 0.09789</li>
               </ul>
-
-              <strong>Phase 3: Clear Overfit (Overfitting deutlich, Test wird schlechter)</strong>
-              <ul>
-                <li>Epochs: 800 | Train MSE: 3.215e-2 | Test MSE: 3.847e-1</li>
-                <li>✗ Großer Gap (Gap = -3.5e-1) UND Test-MSE deutlich schlechter als Phase 1</li>
-                <li>→ Echtes Overfitting: Das Modell memoriert Trainingsdaten statt zu generalisieren</li>
-              </ul>
-
+              <p>Diese Werte zeigen: Der Overfit-Fall ist lange nicht eindeutig, weil das Netzwerk bei 1250-3000 Epochen teilweise auf diesem Datensatz noch etwas besser generalisieren kann als bei Best-Fit mit 350. Ein klarer Overfitting-Beweis wäre, wenn die Test-MSE des Overfit-Modells höher liegt als die des Best-Fit-Modells.</p>
               <h4>Schlussfolgerung für A4:</h4>
               <p>Das Modell ist overfittet, wenn:</p>
               <ul>
