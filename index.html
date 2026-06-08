@@ -75,7 +75,7 @@
           <p><strong>Modell laden:</strong> Beim Laden wird eine Liste der verfügbaren gespeicherten Aliase angezeigt. Durch bestätigen eines Alias wird automatisch das Modell visualisiert.</p>
           <p><strong>Modell exportieren:</strong> Lade das Modell als Dateien herunter (<code>.json</code> + <code>.bin</code>) und speichere es extern.</p>
           <p><strong>Modell importieren:</strong> Lade ein zuvor exportiertes Modell, indem du die Modell-Datei auswählst.</p>
-          <p><strong>Startwerte:</strong> Beim Laden verwendet die Seite standardmäßig <code>Clean = 100</code>, <code>Best-Fit = 350</code> und <code>Overfit = 1250</code> Epochen.</p>
+          <p><strong>Startwerte:</strong> Beim Laden verwendet die Seite standardmäßig <code>Clean = 100</code>, <code>Best-Fit = 350</code> und <code>Overfit = 3000</code> Epochen.</p>
         </div>
       </section>
 
@@ -150,14 +150,13 @@
                 <li><strong>Best-Fit:</strong> <code>350</code> Epochen auf verrauschten Daten. Diese Einstellung zielt darauf ab, das beste Gleichgewicht zwischen Trainings- und Testloss zu erreichen.</li>
                 <li><strong>Overfit:</strong> <code>3000</code> Epochen auf verrauschten Daten. Das soll den Overfitting-Bereich einleiten, allerdings kann die Test-MSE in einigen Läufen immer noch besser ausfallen als beim Best-Fit. Aber da der Training Loss-Verlauf in dem Diagramm mitläuft und entsprechend Zeit in Anspruch nimmt, wurde dieser Wert als Vorauswahl verwendet. Er kann beliebig hochgesetzt werden, um den Effekt weiter zu verstärken.</li>
               </ul>
-              <p>Messwerte aus dem aktuellen Startlauf:</p>
+              <p>Erzielte Messwerte aus dem aktuellen Startlauf:</p>
               <ul>
-                <li><strong>Clean 100:</strong> Train MSE ≈ 0.0108, Test MSE ≈ 0.0585</li>
-                <li><strong>350:</strong> Train MSE ≈ 0.0363, Test MSE ≈ 0.0917</li>
-                <li><strong>1250:</strong> Train MSE ≈ 0.0289, Test MSE ≈ 0.0886</li>
-                <li><strong>3000:</strong> Train MSE ≈ 0.02791, Test MSE ≈ 0.09789</li>
+                <li><strong>Clean 100:</strong> Train MSE ≈ 0.02125, Test MSE ≈ 0.008283</li>
+                <li><strong>Best-Fit 350:</strong> Train MSE ≈ 0.0363, Test MSE ≈ 0.0917</li>
+                <li><strong>Overfit 3000:</strong> Train MSE ≈ 0.02791, Test MSE ≈ 0.09789</li>
               </ul>
-              <p>Diese Werte zeigen: Der Overfit-Fall ist lange nicht eindeutig, weil das Netzwerk bei 1250-3000 Epochen teilweise auf diesem Datensatz noch etwas besser generalisieren kann als bei Best-Fit mit 350. Ein klarer Overfitting-Beweis wäre, wenn die Test-MSE des Overfit-Modells höher liegt als die des Best-Fit-Modells.</p>
+              <p>Diese Werte zeigen: Der Overfit-Fall ist lange nicht eindeutig, weil das Netzwerk bei 3000 Epochen teilweise auf diesem Datensatz noch etwas besser generalisieren kann als bei Best-Fit mit 350. Ein klarer Overfitting-Beweis wäre, wenn die Test-MSE des Overfit-Modells höher liegt als die des Best-Fit-Modells. Also höher als 3000.</p>
               <h4>Schlussfolgerung für A4:</h4>
               <p>Das Modell ist overfittet, wenn:</p>
               <ul>
